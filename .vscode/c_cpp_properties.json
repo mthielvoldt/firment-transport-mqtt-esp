@@ -3,13 +3,15 @@
   "configurations": [
     {
       "name": "test",
+      "compilerPath": "/usr/bin/gcc",
       "compilerArgs": [],
-      "intelliSenseMode": "gcc-arm",
       "includePath": [
         "src",
         "test",
         "test/build/_deps/cpputest-src/include",
-        "test/build/_deps/fmt-transport-iface-src"
+        "test/build/_deps/fmt-transport-iface-src",
+        "test/build/esp-mqtt-src/include",
+        "test/mocks/esp-mqtt"
       ],
       "forcedInclude": [],
       "cStandard": "c11",

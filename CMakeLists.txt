@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 3.31)
 
 include(FetchContent)
 FetchContent_Declare(
@@ -18,6 +18,8 @@ add_library(fmt_transport
 #     inc
 # )
 
+# The parent project must provide esp-idf.
 target_link_libraries(fmt_transport 
   fmt_transport_iface
+  esp-mqtt
 )
