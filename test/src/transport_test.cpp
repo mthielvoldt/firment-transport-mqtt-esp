@@ -4,6 +4,7 @@
 extern "C"
 {
 #include <fmt_transport.h>
+#include <fmt_sizes.h>
 #include <mock_esp_mqtt.h>
 #include "test_shared.h"
 #include <signal.h> // for debugging tests: raise(SIGINT);
@@ -11,7 +12,6 @@ extern "C"
 
 static bool pullTxPacket(uint8_t *const txBuffer);
 static void pushRxPacket(const uint8_t *const rxData);
-
 
 TEST_GROUP(fmt_transport)
 {
@@ -56,10 +56,13 @@ TEST(fmt_transport_init, setup_succeeds)
   CHECK_TRUE(fmt_initTransport());
 }
 
-TEST(fmt_transport, txChain_continues_untill_pullTx_false)
+TEST(fmt_transport, txChain_continues_until_pullTx_false)
 {
-  mock().expectNCalls(3, "esp_mqtt_client_publish").andReturnValue(0);
-  mock().expectNCalls(3, "pullTxPacket").andReturnValue(true);
+  const int chainLen = 3;
+  mock().expectNCalls(1, "esp_mqtt_client_publish")
+    .withIntParameter("len", (chainLen * MAX_PACKET_SIZE_BYTES))
+    .andReturnValue(0);
+  mock().expectNCalls(chainLen, "pullTxPacket").andReturnValue(true);
   mock().expectOneCall("pullTxPacket").andReturnValue(false);
   fmt_startTxChain();
 }
@@ -67,8 +70,8 @@ TEST(fmt_transport, txChain_continues_untill_pullTx_false)
 /*
 TEST(fmt_transport, dataEvent_callsPushRx_once)
 {
-mock().expectOneCall("pushRxPacket");
-test_sendFakeEvent(MQTT_EVENT_DATA);
+  mock().expectOneCall("pushRxPacket");
+  test_sendFakeEvent(MQTT_EVENT_DATA);
 }
 
 TEST(fmt_transport, tx_packets_aggregated)

@@ -13,8 +13,7 @@ static txCallback_t _pullTxPacket = NULL;
 static rxCallback_t _pushRxPacket = NULL;
 
 static esp_mqtt_client_handle_t client = NULL;
-static uint8_t mqttBuffer[MQTT_BUFFER_SIZE];
-static uint32_t mqttWritePos = 0;
+
 static uint32_t lastResetTimeUs = 0;
 static char topicHqBound[36] = "";
 static char topicEdgeBound[36] = "";
@@ -39,15 +38,19 @@ fmt_linkTransport_t fmt_linkTransport = fmt_linkTransport_prod;
 
 void fmt_startTxChain_prod(void)
 {
+  static uint8_t mqttBuffer[MQTT_BUFFER_SIZE];
+  static uint32_t mqttWritePos = 0;
   uint8_t txPacket[MAX_PACKET_SIZE_BYTES];
+
   if (!_pullTxPacket || !client)
     return;
-  
+
   while (_pullTxPacket(txPacket))
   {
-    esp_mqtt_client_publish(
-        client, topicHqBound, (char *)mqttBuffer, mqttWritePos, 1, 1);
+    mqttWritePos += MAX_PACKET_SIZE_BYTES;
   }
+  esp_mqtt_client_publish(
+      client, topicHqBound, (char *)mqttBuffer, mqttWritePos, 1, 1);
 }
 fmt_startTxChain_t fmt_startTxChain = fmt_startTxChain_prod;
 

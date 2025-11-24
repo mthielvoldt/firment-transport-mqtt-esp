@@ -36,7 +36,8 @@ int esp_mqtt_client_subscribe_single(esp_mqtt_client_handle_t client,
 int esp_mqtt_client_publish(esp_mqtt_client_handle_t client, const char *topic,
                             const char *data, int len, int qos, int retain)
 {
-  return mock().actualCall("esp_mqtt_client_publish").returnIntValue();
+  return mock().actualCall("esp_mqtt_client_publish")
+  .withIntParameter("len", len).returnIntValue();
 }
 
 esp_err_t esp_mqtt_client_register_event(esp_mqtt_client_handle_t client,
