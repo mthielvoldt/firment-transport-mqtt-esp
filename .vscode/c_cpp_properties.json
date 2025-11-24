@@ -9,6 +9,7 @@
         "inc",
         "src",
         "test",
+        "test/build/fmt_transport",
         "test/build/_deps/cpputest-src/include",
         "test/build/_deps/fmt-transport-iface-src",
         "test/build/esp-mqtt-src/include",

@@ -21,7 +21,9 @@ FetchContent_Populate(
 )
 FetchContent_MakeAvailable(CppUTest)
 
-add_subdirectory(mocks/esp-mqtt) # -> provides 
+add_subdirectory(mocks/esp-mqtt)
+
+set(TRANSPORT_MQTT_BROKER_URL "mqtt://listpalette.com:1883")
 add_subdirectory(.. fmt_transport)
 
 add_executable(fmt_transport_test
