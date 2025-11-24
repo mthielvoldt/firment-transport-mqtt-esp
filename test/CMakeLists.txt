@@ -25,7 +25,7 @@ add_subdirectory(mocks/esp-mqtt) # -> provides
 add_subdirectory(.. fmt_transport)
 
 add_executable(fmt_transport_test
-  src/fmt_transport_mqtt_esp_test.cpp
+  src/transport_test.cpp
   src/test_main.cpp
   src/test_shared.c
 )
