@@ -4,15 +4,17 @@
 extern "C"
 {
 #include <fmt_transport.h>
-#include <mqtt_client.h>
+#include <mock_esp_mqtt.h>
 #include "test_shared.h"
 #include <signal.h> // for debugging tests: raise(SIGINT);
 }
 
 TEST_GROUP(fmt_transport)
 {
+  
   void setup()
   {
+    fmt_initTransport();
   };
   void teardown()
   {
@@ -21,12 +23,19 @@ TEST_GROUP(fmt_transport)
   };
 };
 
-TEST(fmt_transport, setup_succeeds)
+TEST_GROUP(fmt_transport_init)
 {
-  // CHecks just setup.
+  void teardown()
+  {
+    mock().checkExpectations();
+    mock().clear();
+  };
+};
+TEST(fmt_transport_init, setup_succeeds)
+{
   mock().expectOneCall("esp_mqtt_client_init");
   mock().expectOneCall("esp_mqtt_client_start");
-  fmt_initTransport();
+  CHECK_TRUE(fmt_initTransport());
 }
 
 TEST(fmt_transport, txChain_continues_untill_pullTx_false)
@@ -39,14 +48,11 @@ TEST(fmt_transport, txChain_continues_untill_pullTx_false)
 
 TEST(fmt_transport, dataEvent_callsPushRx_once)
 {
-  esp_mqtt_event_t event = {
-    .event_id = MQTT_EVENT_DATA
-  };
   mock().expectOneCall("pushRxPacket");
-  esp_mqtt_dispatch_custom_event(client, &event);
+  test_sendFakeEvent(MQTT_EVENT_DATA);
 }
 
-TEST(fmt_transport, )
+TEST(fmt_transport, tx_packets_aggregated)
 {
 }
 
