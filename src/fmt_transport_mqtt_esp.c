@@ -12,7 +12,7 @@ static transportErrCount_t errs = {};
 static txCallback_t _pullTxPacket = NULL;
 static rxCallback_t _pushRxPacket = NULL;
 
-static esp_mqtt_client_handle_t client;
+static esp_mqtt_client_handle_t client = NULL;
 static uint8_t mqttBuffer[MQTT_BUFFER_SIZE];
 static uint32_t mqttWritePos = 0;
 static uint32_t lastResetTimeUs = 0;
@@ -40,8 +40,13 @@ fmt_linkTransport_t fmt_linkTransport = fmt_linkTransport_prod;
 void fmt_startTxChain_prod(void)
 {
   uint8_t txPacket[MAX_PACKET_SIZE_BYTES];
-  if (_pullTxPacket && _pullTxPacket(txPacket))
+  if (!_pullTxPacket || !client)
+    return;
+  
+  while (_pullTxPacket(txPacket))
   {
+    esp_mqtt_client_publish(
+        client, topicHqBound, (char *)mqttBuffer, mqttWritePos, 1, 1);
   }
 }
 fmt_startTxChain_t fmt_startTxChain = fmt_startTxChain_prod;
@@ -82,18 +87,17 @@ bool fmt_initTransport(void)
       .session.last_will.qos = 1,
       .session.last_will.retain = true,
   };
-  bool success = true;
 
   // Creates event loop.
   client = esp_mqtt_client_init(&mqtt5_cfg);
 
   ESP_ERROR_CHECK(
-    esp_mqtt5_client_set_connect_property(client, &connect_property));
+      esp_mqtt5_client_set_connect_property(client, &connect_property));
 
   /* The last argument may be used to pass data to the event handler */
   ESP_ERROR_CHECK(esp_mqtt_client_register_event(
-    client, MQTT_EVENT_ANY, mqtt5_event_handler, NULL));
-  
+      client, MQTT_EVENT_ANY, mqtt5_event_handler, NULL));
+
   ESP_ERROR_CHECK(esp_mqtt_client_start(client));
   return true;
 }

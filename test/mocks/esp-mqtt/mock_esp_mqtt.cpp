@@ -8,13 +8,13 @@ extern "C" {
 
 typedef int32_t esp_err_t;
 
-// struct esp_mqtt_client client = {
-// };
+struct esp_mqtt_client {
+} client;
 
 esp_mqtt_client_handle_t
 esp_mqtt_client_init(const esp_mqtt_client_config_t *config)
 {
-  return (esp_mqtt_client_handle_t)mock().actualCall("esp_mqtt_client_init").returnPointerValue();
+  return (esp_mqtt_client_handle_t)mock().actualCall("esp_mqtt_client_init").returnPointerValueOrDefault(&client);
 }
 
 esp_err_t esp_mqtt_client_start(esp_mqtt_client_handle_t client)
