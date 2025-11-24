@@ -12,11 +12,10 @@ add_library(fmt_transport
   src/fmt_transport_mqtt_esp.c
 )
 
-## Possibly not needed: interface is a separate target.
-# target_include_directories(fmt_transport
-#   PUBLIC
-#     inc
-# )
+target_include_directories(fmt_transport
+  PUBLIC
+    inc # fmt_sizes.h
+)
 
 # The parent project must provide esp-idf.
 target_link_libraries(fmt_transport 

@@ -6,6 +6,7 @@
       "compilerPath": "/usr/bin/gcc",
       "compilerArgs": [],
       "includePath": [
+        "inc",
         "src",
         "test",
         "test/build/_deps/cpputest-src/include",

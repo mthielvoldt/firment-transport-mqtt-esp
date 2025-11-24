@@ -5,7 +5,6 @@ add_library(esp-mqtt
 )
 
 target_include_directories(esp-mqtt
-  PRIVATE
-    .
   PUBLIC
+    .
     ${PROJECT_BINARY_DIR}/esp-mqtt-src/include)
