@@ -67,13 +67,20 @@ TEST(fmt_transport, txChain_continues_until_pullTx_false)
   fmt_startTxChain();
 }
 
-/*
 TEST(fmt_transport, dataEvent_callsPushRx_once)
 {
+  const unsigned messageLen = 1;
+  char packet[MAX_PACKET_SIZE_BYTES] = {messageLen};
+  esp_mqtt_event_t event = {
+    .event_id = MQTT_EVENT_DATA,
+    .data = packet,
+    .data_len = messageLen + 1,
+  };
   mock().expectOneCall("pushRxPacket");
-  test_sendFakeEvent(MQTT_EVENT_DATA);
+  test_sendFakeEvent(&event);
 }
 
+/*
 TEST(fmt_transport, tx_packets_aggregated)
 {
 }

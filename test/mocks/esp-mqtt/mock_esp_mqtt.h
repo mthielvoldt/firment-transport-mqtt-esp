@@ -3,6 +3,6 @@
 
 #include <mqtt5_client.h>
 
-void test_sendFakeEvent(esp_mqtt_event_id_t eventType);
+void test_sendFakeEvent(esp_mqtt_event_t *event);
 
 #endif // MOCK_ESP_MQTT_H
