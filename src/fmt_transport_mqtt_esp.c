@@ -21,7 +21,7 @@ static const char *TAG = "mqtt";
 
 static void unpackAndPushToApp(uint8_t *packed, int len);
 static void mqtt5_event_handler(
-    void *handler_args, esp_mqtt_event_id_t base, int32_t event_id,
+    void *handler_args, esp_event_base_t base, int32_t event_id,
     void *event_data);
 
 static bool fmt_linkTransport_prod(txCallback_t pullTxPacket, rxCallback_t pushRxPacket)
@@ -105,7 +105,7 @@ bool fmt_initTransport(void)
   return true;
 }
 
-static void mqtt5_event_handler(void *handler_args, esp_mqtt_event_id_t base, int32_t event_id, void *event_data)
+static void mqtt5_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
 {
   esp_mqtt_event_handle_t event = event_data;
   esp_mqtt_client_handle_t client = event->client;
