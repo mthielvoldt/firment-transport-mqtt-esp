@@ -30,5 +30,5 @@ target_include_directories(fmt_transport
 # The parent project must provide esp-idf.
 target_link_libraries(fmt_transport 
   fmt_transport_iface
-  esp-mqtt
+  idf::mqtt
 )

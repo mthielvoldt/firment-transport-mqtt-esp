@@ -4,6 +4,8 @@ add_library(esp-mqtt
   mock_esp_mqtt.cpp
 )
 
+add_library(idf::mqtt ALIAS esp-mqtt)
+
 target_include_directories(esp-mqtt
   PUBLIC
     .
