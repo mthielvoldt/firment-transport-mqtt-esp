@@ -1,9 +1,9 @@
-#include <fmt_transport.h>
+#include <esp_err.h>
+#include <esp_log.h>
 #include <fmt_sizes.h>
+#include <fmt_transport.h>
 #include <fmt_transport_config.h>
 #include <mqtt5_client.h>
-#include <esp_log.h>
-#include <esp_err.h>
 #include <stddef.h>
 
 #define MQTT_BUFFER_SIZE (MAX_PACKET_SIZE_BYTES * 100)
@@ -20,14 +20,12 @@ static char topicEdgeBound[36] = "";
 static const char *TAG = "mqtt";
 
 static void unpackAndPushToApp(uint8_t *packed, int len);
-static void mqtt5_event_handler(
-    void *handler_args, esp_event_base_t base, int32_t event_id,
-    void *event_data);
+static void mqtt5_event_handler(void *handler_args, esp_event_base_t base,
+                                int32_t event_id, void *event_data);
 
-static bool fmt_linkTransport_prod(txCallback_t pullTxPacket, rxCallback_t pushRxPacket)
-{
-  if (pullTxPacket && pushRxPacket)
-  {
+static bool fmt_linkTransport_prod(txCallback_t pullTxPacket,
+                                   rxCallback_t pushRxPacket) {
+  if (pullTxPacket && pushRxPacket) {
     _pullTxPacket = pullTxPacket;
     _pushRxPacket = pushRxPacket;
     return true;
@@ -36,8 +34,7 @@ static bool fmt_linkTransport_prod(txCallback_t pullTxPacket, rxCallback_t pushR
 }
 fmt_linkTransport_t fmt_linkTransport = fmt_linkTransport_prod;
 
-void fmt_startTxChain_prod(void)
-{
+void fmt_startTxChain_prod(void) {
   static uint8_t mqttBuffer[MQTT_BUFFER_SIZE];
   static uint32_t mqttWritePos = 0;
   uint8_t txPacket[MAX_PACKET_SIZE_BYTES];
@@ -45,27 +42,22 @@ void fmt_startTxChain_prod(void)
   if (!_pullTxPacket || !client)
     return;
 
-  while (_pullTxPacket(txPacket))
-  {
+  while (_pullTxPacket(txPacket)) {
     mqttWritePos += MAX_PACKET_SIZE_BYTES;
   }
   if (mqttWritePos > 0) {
-    esp_mqtt_client_publish(
-      client, topicHqBound, (char *)mqttBuffer, mqttWritePos, 1, 1);
+    esp_mqtt_client_publish(client, topicHqBound, (char *)mqttBuffer,
+                            mqttWritePos, 1, 1);
     mqttWritePos = 0;
   }
 }
 fmt_startTxChain_t fmt_startTxChain = fmt_startTxChain_prod;
 
-const transportErrCount_t *fmt_getTransportErrCount_prod(void)
-{
-  return &errs;
-}
+const transportErrCount_t *fmt_getTransportErrCount_prod(void) { return &errs; }
 fmt_getTransportErrCount_t fmt_getTransportErrCount =
     fmt_getTransportErrCount_prod;
 
-bool fmt_initTransport(void)
-{
+bool fmt_initTransport(void) {
   esp_mqtt5_connection_property_config_t connect_property = {
       .session_expiry_interval = 10,
       .maximum_packet_size = 1024,
@@ -101,19 +93,18 @@ bool fmt_initTransport(void)
       esp_mqtt5_client_set_connect_property(client, &connect_property));
 
   /* The last argument may be used to pass data to the event handler */
-  ESP_ERROR_CHECK(esp_mqtt_client_register_event(
-      client, MQTT_EVENT_ANY, mqtt5_event_handler, NULL));
+  ESP_ERROR_CHECK(esp_mqtt_client_register_event(client, MQTT_EVENT_ANY,
+                                                 mqtt5_event_handler, NULL));
 
   ESP_ERROR_CHECK(esp_mqtt_client_start(client));
   return true;
 }
 
-static void mqtt5_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
-{
+static void mqtt5_event_handler(void *handler_args, esp_event_base_t base,
+                                int32_t event_id, void *event_data) {
   esp_mqtt_event_handle_t event = event_data;
 
-  switch ((esp_mqtt_event_id_t)event_id)
-  {
+  switch ((esp_mqtt_event_id_t)event_id) {
   case MQTT_EVENT_CONNECTED:
     ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
     break;
@@ -132,16 +123,17 @@ static void mqtt5_event_handler(void *handler_args, esp_event_base_t base, int32
     unpackAndPushToApp((uint8_t *)(event->data), event->data_len);
     break;
   case MQTT_EVENT_ERROR:
-    ESP_LOGI(TAG, "MQTT_EVENT_ERROR, return code %d", event->error_handle->connect_return_code);
-    if (event->error_handle->error_type == MQTT_ERROR_TYPE_TCP_TRANSPORT)
-    {
+    ESP_LOGI(TAG, "MQTT_EVENT_ERROR, return code %d",
+             event->error_handle->connect_return_code);
+    if (event->error_handle->error_type == MQTT_ERROR_TYPE_TCP_TRANSPORT) {
       if (event->error_handle->esp_tls_last_esp_err)
         ESP_LOGE(TAG, "reported from esp-tls");
       if (event->error_handle->esp_tls_stack_err)
         ESP_LOGE(TAG, "reported from tls stack");
       if (event->error_handle->esp_transport_sock_errno)
         ESP_LOGE(TAG, "captured as transport's socket errno");
-      ESP_LOGI(TAG, "Last errno string (%s)", strerror(event->error_handle->esp_transport_sock_errno));
+      ESP_LOGI(TAG, "Last errno string (%s)",
+               strerror(event->error_handle->esp_transport_sock_errno));
     }
     break;
   default:
@@ -150,8 +142,7 @@ static void mqtt5_event_handler(void *handler_args, esp_event_base_t base, int32
   }
 }
 
-static void unpackAndPushToApp(uint8_t *packed, int len)
-{
+static void unpackAndPushToApp(uint8_t *packed, int len) {
   size_t packetSize;
   uint8_t packet[MAX_PACKET_SIZE_BYTES];
 
@@ -159,9 +150,8 @@ static void unpackAndPushToApp(uint8_t *packed, int len)
   int msgPos = 0;
   uint8_t msgSize = packed[msgPos + LENGTH_POSITION] + LENGTH_SIZE_BYTES;
 
-  while (
-      msgPos + msgSize <= len && // prevent reading past buffer.
-      msgSize > 1)               // quit if we encounter 0-length msg.
+  while (msgPos + msgSize <= len && // prevent reading past buffer.
+         msgSize > 1)               // quit if we encounter 0-length msg.
   {
     memcpy(packet, &packed[msgPos], msgSize);
     // packetSize = appendCRC(packet);  // placeholder
