@@ -3,7 +3,7 @@
 #include <fmt_sizes.h>
 #include <fmt_transport.h>
 #include <fmt_transport_config.h>
-#include <mqtt5_client.h>
+#include <mqtt_client.h>
 #include <stddef.h>
 
 #define MQTT_BUFFER_SIZE (MAX_PACKET_SIZE_BYTES * 100)
