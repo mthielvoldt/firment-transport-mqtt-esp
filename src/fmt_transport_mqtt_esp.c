@@ -49,8 +49,11 @@ void fmt_startTxChain_prod(void)
   {
     mqttWritePos += MAX_PACKET_SIZE_BYTES;
   }
-  esp_mqtt_client_publish(
+  if (mqttWritePos > 0) {
+    esp_mqtt_client_publish(
       client, topicHqBound, (char *)mqttBuffer, mqttWritePos, 1, 1);
+    mqttWritePos = 0;
+  }
 }
 fmt_startTxChain_t fmt_startTxChain = fmt_startTxChain_prod;
 
@@ -108,7 +111,6 @@ bool fmt_initTransport(void)
 static void mqtt5_event_handler(void *handler_args, esp_event_base_t base, int32_t event_id, void *event_data)
 {
   esp_mqtt_event_handle_t event = event_data;
-  esp_mqtt_client_handle_t client = event->client;
 
   switch ((esp_mqtt_event_id_t)event_id)
   {
