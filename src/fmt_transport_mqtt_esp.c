@@ -16,10 +16,20 @@ static rxCallback_t _pushRxPacket = NULL;
 static esp_mqtt_client_handle_t client = NULL;
 
 static uint32_t lastResetTimeUs = 0;
-static const char* pubTopics[MAX_PUB_TOPIC_COUNT] = {};
+
+typedef struct _pubTopic_s {
+  const char *string;
+  uint32_t msgTag;
+} pubTopic_t;
+
+static pubTopic_t pubTopics[MAX_PUB_TOPIC_COUNT] = {};
+static const char *defaultPubTopic = "";
+static uint32_t pubTopicCount = 0;
+
 static const char *TAG = "mqtt";
 
 static void unpackAndPushToApp(uint8_t *packed, int len);
+static const char *getPubTopic(uint8_t *txPacket);
 static void mqtt5_event_handler(void *handler_args, esp_event_base_t base,
                                 int32_t event_id, void *event_data);
 
@@ -46,11 +56,26 @@ void fmt_startTxChain_prod(void) {
     mqttWritePos += MAX_PACKET_SIZE_BYTES;
   }
   if (mqttWritePos > 0) {
-    esp_mqtt_client_publish(client, pubTopics[0], (char *)mqttBuffer,
-                            mqttWritePos, 1, 1);
+    const char *topic = getPubTopic(txPacket);
+    esp_mqtt_client_publish(client, topic, (char *)mqttBuffer, mqttWritePos, 1,
+                            1);
     mqttWritePos = 0;
   }
 }
+
+static const char *getPubTopic(uint8_t *txPacket) {
+  // Get the submessage tag from the packet.
+  uint32_t msgTag = txPacket[LENGTH_SIZE_BYTES] >> 3;
+
+  // Search the list of stored topics for a match with the field number.
+  for (unsigned i = 0; i < pubTopicCount; i++) {
+    if (pubTopics[i].msgTag == msgTag) {
+      return pubTopics[i].string;
+    }
+  }
+  return defaultPubTopic;
+}
+
 fmt_startTxChain_t fmt_startTxChain = fmt_startTxChain_prod;
 
 const transportErrCount_t *fmt_getTransportErrCount_prod(void) { return &errs; }
@@ -100,19 +125,20 @@ bool fmt_initTransport(void) {
   return true;
 }
 
-bool fmt_setPublishTopic(uint32_t messageTag, const char *topic)
-{
-  static uint8_t numStored = 0;
-  if (messageTag > 0 || numStored >= MAX_PUB_TOPIC_COUNT )
-    return false;
-    
-  numStored++;
-  pubTopics[messageTag] = topic;  // Eventually we'll support per-message topics.
-  return true;
+bool fmt_setPublishTopic(uint32_t messageTag, const char *topic) {
+  if (messageTag == 0) {
+    defaultPubTopic = topic;
+    return true;
+  } else if (pubTopicCount < MAX_PUB_TOPIC_COUNT) {
+    pubTopics[pubTopicCount].msgTag = messageTag;
+    pubTopics[pubTopicCount].string = topic;
+    pubTopicCount++;
+    return true;
+  }
+  return false;
 }
 
-bool fmt_mqttSubscribe(const char *topic)
-{
+bool fmt_mqttSubscribe(const char *topic) {
   int res = esp_mqtt_client_subscribe_single(client, topic, 0);
   return (res >= 0);
 }

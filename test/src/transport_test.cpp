@@ -5,6 +5,7 @@ extern "C" {
 #include "test_shared.h"
 #include <fmt_sizes.h>
 #include <fmt_transport.h>
+#include <fmt_mqtt_topic.h>
 #include <mock_esp_mqtt.h>
 #include <signal.h> // for debugging tests: raise(SIGINT);
 }
@@ -63,10 +64,12 @@ TEST(fmt_transport, txChain_noPublish_if_pullTx_false) {
 
 TEST(fmt_transport, txChain_continues_until_pullTx_false) {
   const int chainLen = 3;
-  uint8_t packet[MAX_PACKET_SIZE_BYTES] = {};
+  const char *topic = "example-topic-8";
+  uint8_t packet[MAX_PACKET_SIZE_BYTES] = {1, (8 << 3)};
   mock()
       .expectNCalls(1, "esp_mqtt_client_publish")
       .withIntParameter("len", (chainLen * MAX_PACKET_SIZE_BYTES))
+      .withStringParameter("topic", topic)
       .andReturnValue(0);
   mock()
       .expectNCalls(chainLen, "pullTxPacket")
@@ -76,6 +79,8 @@ TEST(fmt_transport, txChain_continues_until_pullTx_false) {
       .expectOneCall("pullTxPacket")
       .withUnmodifiedOutputParameter("txBuffer")
       .andReturnValue(false);
+  
+  fmt_setPublishTopic(8, topic);
   fmt_startTxChain();
 }
 
@@ -92,8 +97,9 @@ TEST(fmt_transport, dataEvent_callsPushRx_once) {
 }
 
 /*
-TEST(fmt_transport, tx_packets_aggregated)
+TEST(fmt_transport, txChain_uses_default_topic)
 {
+
 }
 
 TEST(fmt_transport, )

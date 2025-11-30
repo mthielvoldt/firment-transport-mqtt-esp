@@ -46,6 +46,7 @@ int esp_mqtt_client_publish(esp_mqtt_client_handle_t client, const char *topic,
   return mock()
       .actualCall("esp_mqtt_client_publish")
       .withIntParameter("len", len)
+      .withStringParameter("topic", topic)
       .returnIntValue();
 }
 
