@@ -47,6 +47,7 @@ int esp_mqtt_client_publish(esp_mqtt_client_handle_t client, const char *topic,
       .actualCall("esp_mqtt_client_publish")
       .withIntParameter("len", len)
       .withStringParameter("topic", topic)
+      .withMemoryBufferParameter("data", (const uint8_t*)data, len)
       .returnIntValue();
 }
 

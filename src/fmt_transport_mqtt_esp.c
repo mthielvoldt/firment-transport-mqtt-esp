@@ -46,14 +46,17 @@ fmt_linkTransport_t fmt_linkTransport = fmt_linkTransport_prod;
 
 void fmt_startTxChain_prod(void) {
   static uint8_t mqttBuffer[MQTT_BUFFER_SIZE];
-  static uint32_t mqttWritePos = 0;
+  uint32_t mqttWritePos = 0;
   uint8_t txPacket[MAX_PACKET_SIZE_BYTES];
 
   if (!_pullTxPacket || !client)
     return;
 
-  while (_pullTxPacket(txPacket)) {
-    mqttWritePos += MAX_PACKET_SIZE_BYTES;
+  while (mqttWritePos < (sizeof(mqttBuffer) - MAX_PACKET_SIZE_BYTES) &&
+         _pullTxPacket(txPacket) && txPacket[LENGTH_POSITION]) {
+    uint32_t msgLength = txPacket[LENGTH_POSITION] + LENGTH_SIZE_BYTES;
+    memcpy(mqttBuffer + mqttWritePos, txPacket, msgLength);
+    mqttWritePos += msgLength;
   }
   if (mqttWritePos > 0) {
     const char *topic = getPubTopic(txPacket);

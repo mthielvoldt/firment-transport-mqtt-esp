@@ -3,9 +3,9 @@
 
 extern "C" {
 #include "test_shared.h"
+#include <fmt_mqtt_topic.h>
 #include <fmt_sizes.h>
 #include <fmt_transport.h>
-#include <fmt_mqtt_topic.h>
 #include <mock_esp_mqtt.h>
 #include <signal.h> // for debugging tests: raise(SIGINT);
 }
@@ -66,10 +66,12 @@ TEST(fmt_transport, txChain_continues_until_pullTx_false) {
   const int chainLen = 3;
   const char *topic = "example-topic-8";
   uint8_t packet[MAX_PACKET_SIZE_BYTES] = {1, (8 << 3)};
+  uint8_t expectedData[] = {1, (8 << 3), 1, (8 << 3), 1, (8 << 3)};
   mock()
       .expectNCalls(1, "esp_mqtt_client_publish")
-      .withIntParameter("len", (chainLen * MAX_PACKET_SIZE_BYTES))
+      .withIntParameter("len", sizeof(expectedData))
       .withStringParameter("topic", topic)
+      .withMemoryBufferParameter("data", expectedData, sizeof(expectedData))
       .andReturnValue(0);
   mock()
       .expectNCalls(chainLen, "pullTxPacket")
@@ -79,7 +81,7 @@ TEST(fmt_transport, txChain_continues_until_pullTx_false) {
       .expectOneCall("pullTxPacket")
       .withUnmodifiedOutputParameter("txBuffer")
       .andReturnValue(false);
-  
+
   fmt_setPublishTopic(8, topic);
   fmt_startTxChain();
 }
