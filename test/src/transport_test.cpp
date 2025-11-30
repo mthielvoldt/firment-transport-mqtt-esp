@@ -91,29 +91,6 @@ TEST(fmt_transport, dataEvent_callsPushRx_once) {
   test_sendFakeEvent(&event);
 }
 
-TEST(fmt_transport, subscribes_after_version_packet) {
-  const char topicEdgeBound[] = "edgeBound";
-  const char projectName[] = "fmtExMq";
-  uint8_t versionPacket[MAX_PACKET_SIZE_BYTES] = {};
-
-  mock()
-      .expectOneCall("esp_mqtt_client_publish")
-      .withIntParameter("len", (MAX_PACKET_SIZE_BYTES));
-  mock()
-      .expectOneCall("esp_mqtt_client_subscribe_single")
-      .withStringParameter("topic", topicEdgeBound);
-  mock()
-      .expectOneCall("pullTxPacket")
-      .withOutputParameterReturning("txBuffer", versionPacket,
-                                    sizeof(versionPacket))
-      .andReturnValue(true);
-  mock()
-      .expectOneCall("pullTxPacket")
-      .withUnmodifiedOutputParameter("txBuffer")
-      .andReturnValue(false);
-  fmt_startTxChain();
-}
-
 /*
 TEST(fmt_transport, tx_packets_aggregated)
 {

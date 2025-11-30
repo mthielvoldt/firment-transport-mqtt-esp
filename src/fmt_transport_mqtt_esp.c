@@ -1,5 +1,6 @@
 #include <esp_err.h>
 #include <esp_log.h>
+#include <fmt_mqtt_topic.h>
 #include <fmt_sizes.h>
 #include <fmt_transport.h>
 #include <fmt_transport_config.h>
@@ -15,8 +16,7 @@ static rxCallback_t _pushRxPacket = NULL;
 static esp_mqtt_client_handle_t client = NULL;
 
 static uint32_t lastResetTimeUs = 0;
-static char topicHqBound[36] = "";
-static char topicEdgeBound[36] = "";
+static const char* pubTopics[MAX_PUB_TOPIC_COUNT] = {};
 static const char *TAG = "mqtt";
 
 static void unpackAndPushToApp(uint8_t *packed, int len);
@@ -46,7 +46,7 @@ void fmt_startTxChain_prod(void) {
     mqttWritePos += MAX_PACKET_SIZE_BYTES;
   }
   if (mqttWritePos > 0) {
-    esp_mqtt_client_publish(client, topicHqBound, (char *)mqttBuffer,
+    esp_mqtt_client_publish(client, pubTopics[0], (char *)mqttBuffer,
                             mqttWritePos, 1, 1);
     mqttWritePos = 0;
   }
@@ -98,6 +98,23 @@ bool fmt_initTransport(void) {
 
   ESP_ERROR_CHECK(esp_mqtt_client_start(client));
   return true;
+}
+
+bool fmt_setPublishTopic(uint32_t messageTag, const char *topic)
+{
+  static uint8_t numStored = 0;
+  if (messageTag > 0 || numStored >= MAX_PUB_TOPIC_COUNT )
+    return false;
+    
+  numStored++;
+  pubTopics[messageTag] = topic;  // Eventually we'll support per-message topics.
+  return true;
+}
+
+bool fmt_mqttSubscribe(const char *topic)
+{
+  int res = esp_mqtt_client_subscribe_single(client, topic, 0);
+  return (res >= 0);
 }
 
 static void mqtt5_event_handler(void *handler_args, esp_event_base_t base,

@@ -24,7 +24,10 @@ FetchContent_MakeAvailable(CppUTest)
 add_subdirectory(mocks/esp-mqtt)
 
 set(TRANSPORT_MQTT_BROKER_URL "mqtt://listpalette.com:1883")
+set(MAX_PUB_TOPIC_COUNT 3)
+
 add_subdirectory(.. fmt_transport)
+target_compile_definitions(fmt_transport PRIVATE CONFIG_MQTT_PROTOCOL_5)
 
 add_executable(fmt_transport_test
   src/transport_test.cpp

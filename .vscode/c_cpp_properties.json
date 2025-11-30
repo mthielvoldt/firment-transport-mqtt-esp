@@ -19,7 +19,7 @@
       "cStandard": "c11",
       "cppStandard": "c++11",
       "defines": [
-        "CONFIG_MQTT_PROTOCOL_5 1"
+        "CONFIG_MQTT_PROTOCOL_5"
       ]
     }
   ]
